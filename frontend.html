@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!-- <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <title>CALCULA UF</title>
+</head>
+<body>
+    
+
+
+<!-- Modal -->
+<div class="modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" style="margin-top: 10%;">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+<center>
+      <h4><label id="propiedades-actualizadas" style="color: red;"></label> propiedades fueron actualizadas!</h4>
+      <h4>Valor de la UF: <label id="valor-uf" style="color: red;"></label></h4>
+</center>
+      </div>
+      <div class="modal-footer">
+<center>
+        <a class="btn btn-default" href="http://corredoramendez.cl/wp-admin/" role="button">Volver al Panel de Administracion</a>
+</center>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<!-- <script src="http://getbootstrap.com/dist/js/bootstrap.min.js"></script> -->
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script type="text/javascript">
+    jQuery(document).ready(function($) {
+        
+        $('#myModal').modal({
+            backdrop: 'static',
+            keyboard: false
+        });
+        var myPromise = new Promise((resolve, reject) => {
+            if( resp = callStatsUFModal() ){
+                resolve(resp);
+                alert("SUCCES");
+            }else{
+                reject(resp);
+                alert("FAILED");
+            }
+            console.log(resp);
+
+
+        });
+
+        myPromise.then( (resp) => {
+            console.log(resp);
+        }).catch((reason) => {
+            console.log(reason);
+        });
+        //callStatsUFModal();
+
+    
+    });
+
+
+    function openModal()
+    {
+        $('#myModal').modal('show'); 
+    }
+
+    function callStatsUFModal(){
+        var firstUrl = 'http://indicadoresdeldia.cl/webservice/indicadores.json';
+        var secondUrl = 'http://mindicador.cl/api';
+        var first = callExternalAPIUF(1,firstUrl);
+        var second = callExternalAPIUF(2,secondUrl);    
+        return {first: first, second: second};      
+        
+    }
+    function callExternalAPIUF(option, url){
+        var success = false;
+        /* $.getJSON( url, function( response, status, xhr ) {
+            console.log(response);
+            var $uf = getUFByAPIResponse(option,response);
+            $("#valor-uf").text($uf);
+            openModal();
+            success = true;
+        }); */
+        
+        $.ajax({
+            url:url,
+            type:'GET',
+            dataType: (option == 1) ? 'jsonp':'json',
+            timeout: 1000,
+            async: false,
+            jsonpCallback: function(){
+                alert("JSON P");
+            },
+            beforeSend:function(jqXHR, settings){
+                //do something loaders
+                console.log(jqXHR);
+                console.log(settings);
+            },
+            success:function(response)
+            {   
+                console.log(response);
+                success = true;
+                var $uf = getUFByAPIResponse(option,response);
+                $("#valor-uf").text($uf);
+                openModal();
+            },
+            complete:function(s){
+                console.log("COMPLETE");
+            },
+            error: function( jqXHR, textStatus, errorThrown ){
+                console.log(jqXHR);
+                console.log(textStatus);
+                console.log(errorThrown);
+
+            }
+        });
+
+        return success;
+    
+    }
+    function getUFByAPIResponse(apiOption, response)
+    {
+        if(apiOption == 1)  return response.moneda.uf;
+        else  return response.uf.valor;
+    }
+
+    
+</script>
+
+
+</body>
+</html>
+
