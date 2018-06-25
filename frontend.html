@@ -45,13 +45,8 @@
             backdrop: 'static',
             keyboard: false
         });
-        
-        
         callStatsUFModal();
-
-    
     });
-
 
     function openModal()
     {
@@ -86,7 +81,7 @@
             console.log(a2);
             var $uf = getUFByAPIResponse(2,a1);
             $("#valor-uf").text($uf);
-            openModal();
+            callUpdateWPUF($uf);
 
         }).fail(function(b1,b2){
             alert("FAILED");
@@ -98,16 +93,44 @@
         //return {first: first, second: second};      
         
     }
+    function callUpdateWPUF(uf)
+    {
+        $.ajax({
+            url:'backend.php',
+            type:'POST',
+            dataType: 'json',                
+            data: {uf: uf},
+            timeout: 2000,                
+            beforeSend:function(jqXHR, settings){
+                //do something loaders
+                console.log(jqXHR);
+                console.log(settings);
+            },
+            success:function(response)
+            {   
+                success = true;
+                if(response.status == 200){
+                    $("#propiedades-actualizadas").text(response.totalAffected);
+                    openModal();
+                }else{
+                    alert(response.err);
+                }
+            
+                
+            },
+            complete:function(s){
+                
+            },
+            error: function( jqXHR, textStatus, errorThrown ){
+                console.log(jqXHR);
+                console.log(textStatus);
+                console.log(errorThrown);
+            }
+        });
+    }
     function callExternalAPIUF(option, url){
         var success = false;
-        /* $.getJSON( url, function( response, status, xhr ) {
-            console.log(response);
-            var $uf = getUFByAPIResponse(option,response);
-            $("#valor-uf").text($uf);
-            openModal();
-            success = true;
-        }); */
-        
+       
         return  $.ajax({
                 url:url,
                 type:'GET',
@@ -153,6 +176,7 @@
         if(apiOption == 1)  return response.moneda.uf;
         else  return response.uf.valor;
     }
+    
 
     
 </script>

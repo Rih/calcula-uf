@@ -1,74 +1,53 @@
 <?php
 require_once( dirname( __FILE__ ) . '/admin.php' );
 
-
-function valorUF(){
-/*
-    $apiUrl = 'http://mindicador.cl/api';
-
-    if ( ini_get('allow_url_fopen') ) {
-        $json = file_get_contents($apiUrl);
-    } else {
-        $curl = curl_init($apiUrl);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        $json = curl_exec($curl);
-        curl_close($curl);
-    }
-
-    $dailyIndicators = json_decode($json);
-
-    return $dailyIndicators->uf->valor;
-*/
-
-$JsonSource = "http://indicadoresdeldia.cl/webservice/indicadores.json";
-$json = json_decode(file_get_contents($JsonSource));
-
-return substr($json->moneda->uf,1);
-}
-
 global $wpdb;
-$price_1;
-$ufhoy = valorUF();
+
+$ufhoy = $_POST['uf'];
+//meta_value y REAL_HOMES_property_price_2 es el valor en UF
+//meta_value y REAL_HOMES_property_price es el valor en pesos
 
 $fivesdrafts = $wpdb->get_results( 
 	"
 	SELECT ID
-	FROM $wpdb->posts
-        WHERE post_status = 'publish' AND
-              post_type = 'property'
+    FROM $wpdb->posts P
+    INNER JOIN $wpdb->postmeta PM ON P.ID = PM.post_id
+    WHERE P.post_status = 'publish' AND
+            P.post_type = 'property' AND 
+            PM.meta_value is NOT NULL AND
+            PM.meta_key = 'REAL_HOMES_property_price_2'
 	"
 );
 
-$count = $wpdb->get_var( 
-	"
-	SELECT COUNT(*)
-	FROM $wpdb->posts
-        WHERE post_status = 'publish' AND
-              post_type = 'property'
-	"
-);
 
-foreach ( $fivesdrafts as $fivesdraft ) 
-{
-        $price_2 = $wpdb->get_results( 
-	    "
-	    SELECT meta_value
-	    FROM $wpdb->postmeta
-            WHERE post_id = $fivesdraft->ID
-                        AND meta_key = 'REAL_HOMES_property_price_2'
+//meta_value y REAL_HOMES_property_price_2 es el valor en UF
+//meta_value y REAL_HOMES_property_price es el valor en pesos
+if($ufhoy > 0){
+    $count = count($fivesdrafts);
+    $wpdb->query( $wpdb->prepare(
+        "
+        UPDATE $T MAIN_TABLE
+        INNER JOIN 
+        (SELECT t1.ID ID_pesos, t2.ID ID_uf, t1.meta_value uf, t2.meta_value pesos
+        FROM $T1 t1
+        INNER JOIN $T2 t2 
+        ON 
+            t1.post_id = t2.post_id 
+            AND t1.meta_key = 'REAL_HOMES_property_price'
+            AND t2.meta_key = 'REAL_HOMES_property_price_2'
+        WHERE t1.meta_value IS NOT NULL
+        GROUP BY t1.post_id
+        ) T ON T.post_id = MAIN_TABLE.post_id AND MAIN_TABLE.meta_key = 'REAL_HOMES_property_price_2'
+        SET MAIN_TABLE.meta_value = T.uf * %d
+        WHERE MAIN_TABLE.ID = t1.ID_pesos
+        ", $ufhoy));
+    $status = "200";
+    $err = "";
 
-	    "
-        );
-        if($price_2[0]->meta_value != null){
-            $price_1 = $price_2[0]->meta_value*number_format(substr($ufhoy,0,6), 3, '', ''); /* echo $price_1.' - '.number_format($ufhoy, 3, '', '').'<br>'; */
-            $wpdb->query( $wpdb->prepare(
-	        "
-	        UPDATE $wpdb->postmeta
-                SET meta_value = %d
-                WHERE post_id = %d AND meta_key = 'REAL_HOMES_property_price'
-
-	        ",$price_1,$fivesdraft->ID
-            ));
-
-        }
+}else{
+    $count = 0;
+    $status = "403";
+    $err = "Valor UF ingresado inválido para actualizar registros";
 }
+    
+echo json_encode(array('totalAffected' => $count, "status"=>$status, "err" => $err));
