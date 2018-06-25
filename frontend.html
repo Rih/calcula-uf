@@ -45,25 +45,9 @@
             backdrop: 'static',
             keyboard: false
         });
-        var myPromise = new Promise((resolve, reject) => {
-            if( resp = callStatsUFModal() ){
-                resolve(resp);
-                alert("SUCCES");
-            }else{
-                reject(resp);
-                alert("FAILED");
-            }
-            console.log(resp);
-
-
-        });
-
-        myPromise.then( (resp) => {
-            console.log(resp);
-        }).catch((reason) => {
-            console.log(reason);
-        });
-        //callStatsUFModal();
+        
+        
+        callStatsUFModal();
 
     
     });
@@ -77,9 +61,41 @@
     function callStatsUFModal(){
         var firstUrl = 'http://indicadoresdeldia.cl/webservice/indicadores.json';
         var secondUrl = 'http://mindicador.cl/api';
-        var first = callExternalAPIUF(1,firstUrl);
-        var second = callExternalAPIUF(2,secondUrl);    
-        return {first: first, second: second};      
+        //var first = callExternalAPIUF(1,firstUrl);
+        //var second = callExternalAPIUF(2,secondUrl);    
+        /*Promise.all([callExternalAPI2UF(1,firstUrl), callExternalAPIUF(2,secondUrl)]).then((resp1, resp2) => { // try removing ajax 1 or replacing with ajax2
+            alert('All Ajax done with success!');
+            console.log(resp1);
+            console.log(resp2);
+            //var $uf = getUFByAPIResponse(option,response);
+            //$("#valor-uf").text($uf);
+            //openModal();
+        }).catch((response) => {
+            alert('All Ajax done: some failed!')
+        });*/
+
+        $.when(
+            //callExternalAPIUF(1,firstUrl), 
+            callExternalAPIUF(2,secondUrl)
+        ).done(function(a1, a2){
+            // the code here will be executed when all four ajax requests resolve.
+            // a1, a2, a3 and a4 are lists of length 3 containing the response text,
+            // status, and jqXHR object for each of the four ajax calls respectively.
+            alert("DONE");
+            console.log(a1);
+            console.log(a2);
+            var $uf = getUFByAPIResponse(2,a1);
+            $("#valor-uf").text($uf);
+            openModal();
+
+        }).fail(function(b1,b2){
+            alert("FAILED");
+
+            console.log(b1);
+            console.log(b2);
+    });
+
+        //return {first: first, second: second};      
         
     }
     function callExternalAPIUF(option, url){
@@ -92,42 +108,46 @@
             success = true;
         }); */
         
-        $.ajax({
-            url:url,
-            type:'GET',
-            dataType: (option == 1) ? 'jsonp':'json',
-            timeout: 1000,
-            async: false,
-            jsonpCallback: function(){
-                alert("JSON P");
-            },
-            beforeSend:function(jqXHR, settings){
-                //do something loaders
-                console.log(jqXHR);
-                console.log(settings);
-            },
-            success:function(response)
-            {   
-                console.log(response);
-                success = true;
-                var $uf = getUFByAPIResponse(option,response);
-                $("#valor-uf").text($uf);
-                openModal();
-            },
-            complete:function(s){
-                console.log("COMPLETE");
-            },
-            error: function( jqXHR, textStatus, errorThrown ){
-                console.log(jqXHR);
-                console.log(textStatus);
-                console.log(errorThrown);
+        return  $.ajax({
+                url:url,
+                type:'GET',
+                dataType: 'json',                
+                timeout: 2000,                
+                beforeSend:function(jqXHR, settings){
+                    //do something loaders
+                    console.log(jqXHR);
+                    console.log(settings);
+                },
+                success:function(response)
+                {   
+                    success = true;
+                
+                },
+                complete:function(s){
+                    
+                },
+                error: function( jqXHR, textStatus, errorThrown ){
+                    console.log(jqXHR);
+                    console.log(textStatus);
+                    console.log(errorThrown);
 
-            }
-        });
-
-        return success;
+                }
+            });
+        //return success;
     
     }
+
+    function callExternalAPI2UF(option,url)
+    {
+        return $.getJSON( url, function( response, status, xhr ) {
+            console.log(response);
+            var $uf = getUFByAPIResponse(option,response);
+           // $("#valor-uf").text($uf);
+            //openModal();
+            success = true;
+        });
+    }
+
     function getUFByAPIResponse(apiOption, response)
     {
         if(apiOption == 1)  return response.moneda.uf;
