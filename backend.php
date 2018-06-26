@@ -41,12 +41,12 @@ if($ufhoy > 0){
         SET MAIN_TABLE.meta_value = T.uf * %d
         WHERE MAIN_TABLE.ID = t1.ID_pesos
         ", $ufhoy));
-    $status = "200";
+    $status = 200;
     $err = "";
 
 }else{
     $count = 0;
-    $status = "403";
+    $status = 400;
     $err = "Valor UF ingresado inválido para actualizar registros";
 }
     

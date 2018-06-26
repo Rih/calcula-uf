@@ -80,12 +80,9 @@
             console.log(a1);
             console.log(a2);
             var $uf = getUFByAPIResponse(2,a1);
-            $("#valor-uf").text($uf);
             callUpdateWPUF($uf);
 
         }).fail(function(b1,b2){
-            alert("FAILED");
-
             console.log(b1);
             console.log(b2);
     });
@@ -110,6 +107,7 @@
             {   
                 success = true;
                 if(response.status == 200){
+                    $("#valor-uf").text(uf);
                     $("#propiedades-actualizadas").text(response.totalAffected);
                     openModal();
                 }else{
